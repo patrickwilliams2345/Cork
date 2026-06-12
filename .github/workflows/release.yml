@@ -64,7 +64,14 @@ jobs:
             exit 1
           fi
 
+      - name: Upload Workflow Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Cork-Self-Compiled
+          path: Cork-Self-Compiled.zip
+
       - name: Upload Artifacts to Release
+        if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           files: |
