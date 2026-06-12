@@ -21,25 +21,26 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -switch /Applications/Xcode_26.0.app
 
-      - name: Configure Dynamic Linker Paths
-        run: |
-          XCODE_PATH=$(xcode-select -p)
-          SWIFT_LIB_PATH=$(find "$XCODE_PATH/Toolchains/XcodeDefault.xctoolchain/usr/lib" -name "libswiftCompatibilitySpan.dylib" | grep "/macosx/" | head -n 1 | xargs dirname)
-          if [ -n "$SWIFT_LIB_PATH" ]; then
-            echo "DYLD_FALLBACK_LIBRARY_PATH=$SWIFT_LIB_PATH:$DYLD_FALLBACK_LIBRARY_PATH" >> $GITHUB_ENV
-            echo "Configured DYLD_FALLBACK_LIBRARY_PATH to: $SWIFT_LIB_PATH"
-          else
-            echo "libswiftCompatibilitySpan.dylib not found in active macOS toolchain"
-          fi
-
       - name: Fix Xcode Package Fingerprint Plugins Validation
         run: defaults write com.apple.dt.Xcode IDESkipPackagePluginFingerprintValidatation -bool YES
 
       - name: Install dependencies via Tuist
-        run: tuist install
+        run: |
+          XCODE_PATH=$(xcode-select -p)
+          SWIFT_LIB_PATH=$(find "$XCODE_PATH/Toolchains/XcodeDefault.xctoolchain/usr/lib" -name "libswiftCompatibilitySpan.dylib" | grep "/macosx/" | head -n 1 | xargs dirname)
+          if [ -n "$SWIFT_LIB_PATH" ]; then
+            export DYLD_FALLBACK_LIBRARY_PATH="$SWIFT_LIB_PATH:$DYLD_FALLBACK_LIBRARY_PATH"
+          fi
+          tuist install
 
       - name: Generate Xcode Project
-        run: tuist generate --no-open
+        run: |
+          XCODE_PATH=$(xcode-select -p)
+          SWIFT_LIB_PATH=$(find "$XCODE_PATH/Toolchains/XcodeDefault.xctoolchain/usr/lib" -name "libswiftCompatibilitySpan.dylib" | grep "/macosx/" | head -n 1 | xargs dirname)
+          if [ -n "$SWIFT_LIB_PATH" ]; then
+            export DYLD_FALLBACK_LIBRARY_PATH="$SWIFT_LIB_PATH:$DYLD_FALLBACK_LIBRARY_PATH"
+          fi
+          tuist generate --no-open
 
       - name: Build Self-Compiled App (Free version)
         run: |
@@ -48,17 +49,6 @@ jobs:
             -scheme Self-Compiled \
             -configuration Release \
             -derivedDataPath build_self_compiled \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY=""
-
-      - name: Build Cork App (Paid version)
-        run: |
-          xcodebuild build \
-            -workspace Cork.xcworkspace \
-            -scheme Cork \
-            -configuration Release \
-            -derivedDataPath build_cork \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY=""
@@ -74,22 +64,10 @@ jobs:
             exit 1
           fi
 
-      - name: Package Cork App
-        run: |
-          APP_PATH=$(find build_cork -name "Cork.app" -type d | head -n 1)
-          if [ -n "$APP_PATH" ]; then
-            cd "$(dirname "$APP_PATH")"
-            zip -r "${{ github.workspace }}/Cork.zip" Cork.app
-          else
-            echo "Cork.app not found!"
-            exit 1
-          fi
-
       - name: Upload Artifacts to Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             Cork-Self-Compiled.zip
-            Cork.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
