@@ -5,6 +5,9 @@ on:
     types: [published]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   release-build:
     runs-on: macos-15
@@ -14,9 +17,6 @@ jobs:
 
       - name: Set up Mise (Tuist & Swift)
         uses: jdx/mise-action@v2
-
-      - name: Select Xcode
-        run: sudo xcode-select -switch /Applications/Xcode_26.0.app
 
       - name: Fix Xcode Package Fingerprint Plugins Validation
         run: defaults write com.apple.dt.Xcode IDESkipPackagePluginFingerprintValidatation -bool YES
