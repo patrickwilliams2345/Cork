@@ -28,7 +28,7 @@ func corkTarget(configureWithSelfCompiled: Bool) -> ProjectDescription.Target {
             "Cork/**/*.xcstrings",
             "PrivacyInfo.xcprivacy",
             "Cork/Logic/Helpers/Programs/Sudo Helper",
-            "Cork/AppIcon.icon"
+            "Cork/AppIcon.icns"
         ], dependencies: [
             // .target(name: "CorkHelp"),
             .target(corkSharedTarget),
