@@ -1,7 +1,13 @@
 # https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-swift
 
 name: Swift
-on: [push, pull_request]
+on:
+  # Fork: trigger only on release tags synced from upstream, not every branch push.
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
 jobs:
   build:
     name: Swift
