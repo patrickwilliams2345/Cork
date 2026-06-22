@@ -3,6 +3,8 @@ name: Release Build
 on:
   release:
     types: [published]
+  push:
+    tags: ['*']
   workflow_dispatch:
 
 permissions:
@@ -71,7 +73,7 @@ jobs:
           path: Cork-Self-Compiled.zip
 
       - name: Upload Artifacts to Release
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || github.event_name == 'push'
         uses: softprops/action-gh-release@v2
         with:
           files: |
